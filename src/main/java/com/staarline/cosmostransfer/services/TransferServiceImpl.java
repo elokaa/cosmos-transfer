@@ -4,6 +4,7 @@ import com.staarline.cosmostransfer.exceptions.NotFoundException;
 import com.staarline.cosmostransfer.exceptions.TransferServiceException;
 import com.staarline.cosmostransfer.models.Account;
 import com.staarline.cosmostransfer.models.Transaction;
+import com.staarline.cosmostransfer.repositories.AccountBalanceDao;
 import com.staarline.cosmostransfer.repositories.AccountBalanceRepository;
 import com.staarline.cosmostransfer.repositories.TransactionsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,12 +16,15 @@ public class TransferServiceImpl implements TransferService {
  
     private final TransactionsRepository transactionsRepository;
  
+    private final AccountBalanceDao accountBalanceDao;
+
     private final AccountBalanceRepository accountBalanceRepository;
- 
+
     @Autowired
-    public TransferServiceImpl(TransactionsRepository transactionsRepository, AccountBalanceRepository accountBalanceRepository) {
+    public TransferServiceImpl(TransactionsRepository transactionsRepository, AccountBalanceRepository accountBalanceRepository, AccountBalanceDao accountBalanceDao) {
         this.transactionsRepository = transactionsRepository;
         this.accountBalanceRepository = accountBalanceRepository;
+        this.accountBalanceDao = accountBalanceDao;
     }
  
     @Override
@@ -29,13 +33,20 @@ public class TransferServiceImpl implements TransferService {
         if (fromAccount.equals(toAccount)) {
             throw new TransferServiceException("Cannot transfer to same account");
         }
+
+        if (amount < 100) {
+            throw new TransferServiceException("Amount cannot be less than #100");
+        }
  
         //Fetch accounts
-        Account transferringAccount = accountBalanceRepository.findByAccountNumber(fromAccount);
-        Account receivingAccount = accountBalanceRepository.findByAccountNumber(toAccount);
+        Account transferringAccount = accountBalanceRepository.findById(fromAccount).orElseThrow(
+                () -> new NotFoundException("No account found with account number: " + fromAccount));
+
+        Account receivingAccount = accountBalanceRepository.findById(toAccount).orElseThrow(
+                () -> new NotFoundException("No account found with account number: " + toAccount));
  
         //Generate new transaction
-        Transaction transaction = validateAccountForTransaction(fromAccount, toAccount, amount, transferringAccount, receivingAccount);
+        Transaction transaction = validateAccountForTransaction(fromAccount, amount, transferringAccount);
  
         //Update account balances
         double balance = transferringAccount.getBalance() - amount;
@@ -49,16 +60,8 @@ public class TransferServiceImpl implements TransferService {
         //Persist transactions
         transactionsRepository.save(transaction);
     }
- 
-    private Transaction validateAccountForTransaction(String fromAccount, String toAccount, double amount, Account transferringAccount, Account receivingAccount) throws NotFoundException, TransferServiceException {
-        if (transferringAccount == null) {
-            throw new NotFoundException("No account found with account number: " + fromAccount);
-        }
- 
-        if (receivingAccount == null) {
-            throw new NotFoundException("No account found with account number: " + toAccount);
-        }
- 
+
+    private Transaction validateAccountForTransaction(String fromAccount, double amount, Account transferringAccount) throws TransferServiceException {
         if (transferringAccount.getBalance() < amount) {
             throw new TransferServiceException("Insufficient funds");
         }

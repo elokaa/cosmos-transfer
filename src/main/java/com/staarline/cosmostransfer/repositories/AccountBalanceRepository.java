@@ -6,6 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AccountBalanceRepository extends DocumentDbRepository<Account, String> {
- 
-    Account findByAccountNumber(String accountNumber);
+
 }

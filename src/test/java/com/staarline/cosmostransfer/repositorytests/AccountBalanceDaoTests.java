@@ -1,6 +1,7 @@
 package com.staarline.cosmostransfer.repositorytests;
 
 import com.staarline.cosmostransfer.models.Account;
+import com.staarline.cosmostransfer.repositories.AccountBalanceDao;
 import com.staarline.cosmostransfer.repositories.AccountBalanceRepository;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,13 +22,13 @@ import static org.junit.Assert.assertFalse;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
-public class AccountBalanceRepositoryTests {
+public class AccountBalanceDaoTests {
   
     @Autowired
     private TestEntityManager entityManager;
   
     @Autowired
-    private AccountBalanceRepository accountBalanceRepository;
+    private AccountBalanceDao accountBalanceRepository;
  
     private static Validator validator;
  
@@ -45,7 +46,7 @@ public class AccountBalanceRepositoryTests {
         entityManager.flush();
  
         // when
-        Account found = accountBalanceRepository.findByAccountNumber(account.getAccountNumber());
+        Account found = accountBalanceRepository.findOneByAccountNumber(account.getAccountNumber());
  
         // then
         assertEquals(found.getAccountNumber(), account.getAccountNumber());
@@ -71,13 +72,13 @@ public class AccountBalanceRepositoryTests {
         entityManager.flush();
  
         // when
-        Account found = accountBalanceRepository.findByAccountNumber(account.getAccountNumber());
+        Account found = accountBalanceRepository.findOneByAccountNumber(account.getAccountNumber());
         found.setBalance(found.getBalance() - 3500);
  
         entityManager.persist(found);
         entityManager.flush();
  
-        Account debited = accountBalanceRepository.findByAccountNumber(account.getAccountNumber());
+        Account debited = accountBalanceRepository.findOneByAccountNumber(account.getAccountNumber());
  
         // then
         assertEquals(debited.getBalance(), 46500, 1);
@@ -91,13 +92,13 @@ public class AccountBalanceRepositoryTests {
         entityManager.flush();
  
         // when
-        Account found = accountBalanceRepository.findByAccountNumber(account.getAccountNumber());
+        Account found = accountBalanceRepository.findOneByAccountNumber(account.getAccountNumber());
         found.setBalance(found.getBalance() + 3500);
  
         entityManager.persist(found);
         entityManager.flush();
  
-        Account credited = accountBalanceRepository.findByAccountNumber(account.getAccountNumber());
+        Account credited = accountBalanceRepository.findOneByAccountNumber(account.getAccountNumber());
  
         // then
         assertEquals(credited.getBalance(), 53500, 1);
