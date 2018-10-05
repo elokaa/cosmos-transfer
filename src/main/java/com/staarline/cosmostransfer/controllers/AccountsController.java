@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
  
 import java.util.List;
  
-@Controller
+@RestController
 @RequestMapping(path = "/api/v1/account/")
 public class AccountsController {
  
@@ -20,13 +20,11 @@ public class AccountsController {
     }
  
     @PostMapping(path = "new")
-    @ResponseBody
     public boolean createAccount(@RequestBody Account account) {
         accountsService.createAccount(account);
         return true;
     }
  
-    @ResponseBody
     @GetMapping(path = "all")
     public Iterable<Account> getAccounts() {
         return accountsService.getAccounts();
